@@ -7,11 +7,6 @@ import (
 	"strconv"
 )
 
-type test struct {
-	A string
-	B string
-}
-
 type router struct {
 	routes WebPart
 }
@@ -39,22 +34,30 @@ func (r router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 //StartListening starts a HTTP listener on given port
-func StartListening(ctx context.Context, ip string, port uint16, routes WebPart) error {
-	if routes == nil {
-		return fmt.Errorf("no routes defined")
-	}
-
-	serv := http.Server{
-		Addr:    ip + ":" + strconv.Itoa(int(port)),
-		Handler: router{routes},
-	}
-
+func StartListening(ctx context.Context, ip string, port uint16, routes WebPart) <-chan error {
+	errChan := make(chan error)
 	go func() {
-		<-ctx.Done()
-		try(serv.Close())
-	}()
+		if routes == nil {
+			errChan <- fmt.Errorf("no routes defined")
+		} else {
 
-	return nil
+			serv := http.Server{
+				Addr:    ip + ":" + strconv.Itoa(int(port)),
+				Handler: router{routes},
+			}
+
+			go func() {
+				errChan <- serv.ListenAndServe()
+			}()
+
+			go func() {
+				<-ctx.Done()
+				close(errChan)
+				try(serv.Close())
+			}()
+		}
+	}()
+	return errChan
 }
 
 func try(err error) {

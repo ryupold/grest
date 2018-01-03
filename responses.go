@@ -8,10 +8,10 @@ import (
 )
 
 // ResponseR returns a HTTP response with 'status' and data as Reader
-func ResponseR(status int, reader io.Reader) WebPart {
+func ResponseR(status int, reader func() io.Reader) WebPart {
 	return func(u WebUnit) *WebUnit {
 		u.Writer.WriteHeader(status)
-		_, err := io.Copy(u.Writer, reader)
+		_, err := io.Copy(u.Writer, reader())
 		Try(err)
 		return &u
 	}
@@ -19,7 +19,7 @@ func ResponseR(status int, reader io.Reader) WebPart {
 
 // Response returns a HTTP response with 'status' and 'data'
 func Response(status int, data []byte) WebPart {
-	return ResponseR(status, bytes.NewReader(data))
+	return ResponseR(status, func() io.Reader { return bytes.NewReader(data) })
 }
 
 // Response (composing) returns a HTTP response with 'status' and 'data'
@@ -50,12 +50,12 @@ func (w WebPart) OK(data []byte) WebPart {
 }
 
 // OKR returns 200 response with a reader containing the body
-func OKR(reader io.Reader) WebPart {
+func OKR(reader func() io.Reader) WebPart {
 	return ResponseR(http.StatusOK, reader)
 }
 
 // OKR (composing) returns 200 response with a reader containing the body
-func (w WebPart) OKR(reader io.Reader) WebPart {
+func (w WebPart) OKR(reader func() io.Reader) WebPart {
 	return Compose(w, OKR(reader))
 }
 

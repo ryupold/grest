@@ -26,11 +26,11 @@ func Compose(parts ...WebPart) WebPart {
 		next := unit
 		for _, p := range parts {
 			if p == nil {
-				return nil
+				break
 			}
 			result = p(next)
 			if result == nil {
-				return nil
+				break
 			}
 
 			next = *result
