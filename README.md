@@ -36,10 +36,10 @@ func main() {
         ))
 
         select {
-        case err, closed := <-serverLife:
+        case err, alive := <-serverLife:
             if err != nil {
                 panic(err)
-            } else if closed {
+            } else if !alive {
                 fmt.Println("server stopped")
             }
         }
