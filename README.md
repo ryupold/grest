@@ -28,7 +28,7 @@ func main() {
             TypedPath("/add/%d/%d", func(u WebUnit, params []interface{}) *WebUnit {
                 n1 := params[0].(int)
                 n2 := params[1].(int)
-                return OKJ(fmt.Sprintf("%d + %d = %d", n1, n2, n1+n2))(u)
+                return OKS(fmt.Sprintf("%d + %d = %d", n1, n2, n1+n2))(u)
             }),
 
             //404 - no route matched
