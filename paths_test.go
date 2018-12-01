@@ -113,7 +113,7 @@ func TestTypedPath(t *testing.T) {
 			c.pattern,
 			func(unit WebUnit, v []interface{}) *WebUnit {
 				if len(v) == len(c.values) {
-					for i, _ := range v {
+					for i := range v {
 						if v[i] != c.values[i] {
 							if c.hasResult {
 								t.Errorf("Value %d differs: %v != %v\n", i, v[i], c.values[i])
