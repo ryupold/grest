@@ -21,6 +21,21 @@ func (w WebPart) Prefix(prefix string) WebPart {
 	return Compose(w, Prefix(prefix))
 }
 
+// PrefixDirty filters paths that dont start with 'prefix' (doesn't clean path)
+func PrefixDirty(prefix string) WebPart {
+	return func(u WebUnit) *WebUnit {
+		if strings.HasPrefix(u.Request.URL.Path, prefix) {
+			return &u
+		}
+		return nil
+	}
+}
+
+// PrefixDirty (composing) filters paths that dont start with 'prefix' (doesn't clean path)
+func (w WebPart) PrefixDirty(prefix string) WebPart {
+	return Compose(w, PrefixDirty(prefix))
+}
+
 // Path matches exact path
 func Path(path string) WebPart {
 	return func(u WebUnit) *WebUnit {
@@ -102,38 +117,6 @@ func TypedPath(pattern string, do func(WebUnit, []interface{}) *WebUnit) WebPart
 // %t => bool
 func (w WebPart) TypedPath(pattern string, do func(WebUnit, []interface{}) *WebUnit) WebPart {
 	return Compose(w, TypedPath(pattern, do))
-}
-
-// RequiredQuery checks Request for required keys.
-// Pass through if requirements are met.
-// Return errResult if not.
-// It's ok to pass nil if this WebPart should be skipped
-func RequiredQuery(errResult *WebPart, requiredKeys ...string) WebPart {
-	return func(u WebUnit) *WebUnit {
-		result := &u
-
-		query := u.Request.URL.Query()
-		for _, rk := range requiredKeys {
-			if query.Get(rk) == "" {
-				result = nil
-				break
-			}
-		}
-
-		if result == nil && errResult != nil {
-			return (*errResult)(u)
-		}
-
-		return result
-	}
-}
-
-// RequiredQuery checks Request for required keys.
-// Pass through if requirements are met.
-// Return errResult if not.
-// It's ok to pass nil if this WebPart should be skipped
-func (w WebPart) RequiredQuery(errResult *WebPart, requiredKeys ...string) WebPart {
-	return Compose(w, RequiredQuery(errResult, requiredKeys...))
 }
 
 // RegexPath matches path by regular expression

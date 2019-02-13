@@ -8,10 +8,12 @@ import (
 )
 
 // ResponseR returns a HTTP response with 'status' and data as Reader
-func ResponseR(status int, reader func() io.Reader) WebPart {
+func ResponseR(status int, reader func() io.ReadCloser) WebPart {
 	return func(u WebUnit) *WebUnit {
 		u.Writer.WriteHeader(status)
-		_, err := io.Copy(u.Writer, reader())
+		r := reader()
+		defer r.Close()
+		_, err := io.Copy(u.Writer, r)
 		Try(err)
 		return &u
 	}
@@ -19,7 +21,7 @@ func ResponseR(status int, reader func() io.Reader) WebPart {
 
 // Response returns a HTTP response with 'status' and 'data'
 func Response(status int, data []byte) WebPart {
-	return ResponseR(status, func() io.Reader { return bytes.NewReader(data) })
+	return ResponseR(status, func() io.ReadCloser { return MakeClosable(bytes.NewReader(data), nil) })
 }
 
 // Response (composing) returns a HTTP response with 'status' and 'data'
@@ -50,12 +52,12 @@ func (w WebPart) OK(data []byte) WebPart {
 }
 
 // OKR returns 200 response with a reader containing the body
-func OKR(reader func() io.Reader) WebPart {
+func OKR(reader func() io.ReadCloser) WebPart {
 	return ResponseR(http.StatusOK, reader)
 }
 
 // OKR (composing) returns 200 response with a reader containing the body
-func (w WebPart) OKR(reader func() io.Reader) WebPart {
+func (w WebPart) OKR(reader func() io.ReadCloser) WebPart {
 	return Compose(w, OKR(reader))
 }
 
@@ -77,6 +79,18 @@ func OKJ(v interface{}) WebPart {
 // OKJ (composing) returns 200 response with data encoded as json
 func (w WebPart) OKJ(v interface{}) WebPart {
 	return Compose(w, OKJ(v))
+}
+
+//OKExtras returns 200 response with extras as json
+func OKExtras() WebPart {
+	return func(u WebUnit) *WebUnit {
+		return OKJ(u.Extras())(u)
+	}
+}
+
+//OKExtras returns 200 response with extras as json
+func (w WebPart) OKExtras() WebPart {
+	return Compose(w, OKExtras())
 }
 
 // Bad returns 400 response with error message
@@ -159,4 +173,25 @@ func (w WebPart) Panic(status int, message string) WebPart {
 	return Compose(w, func(u WebUnit) *WebUnit {
 		panic(Error{Status: status, Message: message})
 	})
+}
+
+type closer struct {
+	reader io.Reader
+	close  func() error
+}
+
+func (c closer) Read(buffer []byte) (int, error) {
+	return c.reader.Read(buffer)
+}
+
+func (c closer) Close() error {
+	if c.close != nil {
+		return c.close()
+	}
+	return nil
+}
+
+//MakeClosable turns a io.Reader into io.ReadCloser with optional closeAction
+func MakeClosable(r io.Reader, closeAction func() error) io.ReadCloser {
+	return &closer{r, closeAction}
 }
