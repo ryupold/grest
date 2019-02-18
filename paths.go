@@ -131,7 +131,8 @@ func RegexPath(pattern string) WebPart {
 		if m, err := regexp.MatchString(pattern, path); m {
 			return &u
 		} else if err != nil {
-			Try(err)
+			u.Panic(err)
+			return &u
 		}
 
 		return nil
