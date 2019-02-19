@@ -18,13 +18,11 @@ func (r router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		err := recover()
 		if err != nil {
 			cancel()
-			p, isErrorStruct := err.(Error)
-			if isErrorStruct {
-				ContentType(ContentTypeJSON).
-					ResponseJ(p.Status, p)(WebUnit{w, req, ctx})
+			p, hasPaniced := err.(error)
+			if hasPaniced {
+				Panic(p)(WebUnit{w, req, ctx})
 			} else {
-				ContentType(ContentTypeJSON).
-					ResponseJ(http.StatusInternalServerError, Error{Status: http.StatusInternalServerError, Message: fmt.Sprintf("%v", err)})(WebUnit{w, req, ctx})
+				Status(http.StatusInternalServerError).ServeBytes([]byte(fmt.Sprint(err)))(WebUnit{w, req, ctx})
 			}
 
 			panic(err)
