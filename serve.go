@@ -9,6 +9,7 @@ import (
 
 //ServeReadCloser returns a HTTP response with Content coming from a io.ReadCloser that is closed after Read() returns io.EOF
 //If getReader() returns an error it will result in a panic
+//Try to create the reader inside the getReader func to avoid too soon/unnecessary memory allocation
 func ServeReadCloser(getReader func() (io.ReadCloser, error)) WebPart {
 	return func(u WebUnit) *WebUnit {
 		r, err := getReader()
@@ -48,6 +49,16 @@ func ServeBytes(data []byte) WebPart {
 // ServeBytes responses with the given bytes
 func (w WebPart) ServeBytes(data []byte) WebPart {
 	return Compose(w, ServeBytes(data))
+}
+
+//ServeString serves the given string as response (convinience wrapper for ServeBytes)
+func ServeString(s string) WebPart {
+	return ServeBytes([]byte(s))
+}
+
+//ServeString serves the given string as response (convinience wrapper for ServeBytes)
+func (w WebPart) ServeString(s string) WebPart {
+	return w.ServeBytes([]byte(s))
 }
 
 //ServeJSON responses with a JSON object as bytes

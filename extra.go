@@ -21,6 +21,19 @@ func (u *WebUnit) PutExtra(key string, value interface{}) {
 	u.Context = context.WithValue(u.Context, extraKey, d)
 }
 
+//PutExtra puts given Data into extras, merging with previous key:values
+func PutExtra(key string, value interface{}) WebPart {
+	return func(u WebUnit) *WebUnit {
+		u.PutExtra(key, value)
+		return &u
+	}
+}
+
+//PutExtra puts given Data into extras, merging with previous key:values
+func (w WebPart) PutExtra(key string, value interface{}) WebPart {
+	return Compose(w, PutExtra(key, value))
+}
+
 //PutExtras puts given Data into extras, merging with previous key:values
 func (u *WebUnit) PutExtras(extras Data) {
 	e := u.Extras()
@@ -31,7 +44,33 @@ func (u *WebUnit) PutExtras(extras Data) {
 	}
 }
 
+//PutExtras puts given Data into extras, merging with previous key:values
+func PutExtras(extras Data) WebPart {
+	return func(u WebUnit) *WebUnit {
+		u.PutExtras(extras)
+		return &u
+	}
+}
+
+//PutExtras puts given Data into extras, merging with previous key:values
+func (w WebPart) PutExtras(extras Data) WebPart {
+	return Compose(w, PutExtras(extras))
+}
+
 //SetExtras overrides the previous extras with given Data object
 func (u *WebUnit) SetExtras(extras Data) {
 	u.Context = context.WithValue(u.Context, extraKey, extras)
+}
+
+//SetExtras puts given Data into extras, merging with previous key:values
+func SetExtras(extras Data) WebPart {
+	return func(u WebUnit) *WebUnit {
+		u.SetExtras(extras)
+		return &u
+	}
+}
+
+//SetExtras puts given Data into extras, merging with previous key:values
+func (w WebPart) SetExtras(extras Data) WebPart {
+	return Compose(w, SetExtras(extras))
 }

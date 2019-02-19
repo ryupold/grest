@@ -17,22 +17,22 @@ func main() {
     go func() {
         serverLife := StartListening(ctx, "", 44444, Choose(
             // /
-            Path("/").OKS("hello world"),
+            Path("/").OK().ServeString("hello world"),
 
             // /hello/STRING
             TypedPath("/hello/%s", func(u WebUnit, params []interface{}) *WebUnit {
-                return OKS(fmt.Sprintf("hello %s", params[0]))(u)
+                return OK().ServeString(fmt.Sprintf("hello %s", params[0]))(u)
             }),
 
             // /add/NUMBER/NUMBER
             TypedPath("/add/%d/%d", func(u WebUnit, params []interface{}) *WebUnit {
                 n1 := params[0].(int)
                 n2 := params[1].(int)
-                return OKS(fmt.Sprintf("%d + %d = %d", n1, n2, n1+n2))(u)
+                return OK().ServeString(fmt.Sprintf("%d + %d = %d", n1, n2, n1+n2))(u)
             }),
 
             //404 - no route matched
-            NotFoundS("404"),
+            NotFound().ServeString("404"),
         ))
 
         select {

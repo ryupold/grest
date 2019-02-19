@@ -2,6 +2,7 @@ package grest
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -26,13 +27,13 @@ func (t testWriter) Write(data []byte) (int, error) {
 	return i, nil
 }
 
-func (t testWriter) WriteHeader(int) {
-
+func (t testWriter) WriteHeader(statusCode int) {
+	t.Body = append(t.Body, []byte(fmt.Sprint(statusCode))...)
 }
 
 func getTestContext(useURL string) WebUnit {
 	u, err := url.ParseRequestURI(useURL)
-	Try(err)
+	try(err)
 	return WebUnit{testWriter{HeaderValues: make(map[string][]string)}, &http.Request{URL: u}, context.TODO()}
 }
 
@@ -153,7 +154,7 @@ func TestRequiredQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		sut := RequiredQuery(nil, c.keys...)
+		sut := Query(c.keys...)
 		result := sut(getTestContext("http://text.de" + c.url))
 		if (result == nil && c.hasResult) || (result != nil && !c.hasResult) {
 			t.Errorf(`RequiredQuery("%v") on URL=%s%s should be %v`, c.keys, "http://text.de", c.url, c.hasResult)
@@ -181,7 +182,7 @@ func TestRegexPath(t *testing.T) {
 		{"^/[a-z]+[0-9]{1,3}$", "/test514a", false, nil},
 		{"^/[a-z]+[0-9]{2,}$", "/test514", true, nil},
 		{"^/[a-z]+[0-9]{2,}$", "/asd", false, nil},
-		{"^/[a-z]+[0-9]{2,}$", "/asd", true, BadJ(TestType{})},
+		{"^/[a-z]+[0-9]{2,}$", "/asd", true, BadRequest().ServeJSON(TestType{})},
 	}
 
 	for _, c := range cases {
