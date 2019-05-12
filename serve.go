@@ -10,9 +10,9 @@ import (
 //ServeReadCloser returns a HTTP response with Content coming from a io.ReadCloser that is closed after Read() returns io.EOF
 //If getReader() returns an error it will result in a panic
 //Try to create the reader inside the getReader func to avoid too soon/unnecessary memory allocation
-func ServeReadCloser(getReader func() (io.ReadCloser, error)) WebPart {
+func ServeReadCloser(getReader func(WebUnit) (io.ReadCloser, error)) WebPart {
 	return func(u WebUnit) *WebUnit {
-		r, err := getReader()
+		r, err := getReader(u)
 		if err != nil {
 			u.Panic(err)
 			u.Writer.WriteHeader(http.StatusInternalServerError)
@@ -37,18 +37,34 @@ func ServeReadCloser(getReader func() (io.ReadCloser, error)) WebPart {
 
 //ServeReadCloser returns a HTTP response with Content coming from a io.ReadCloser that is closed after Read() returns io.EOF
 //If getReader() returns an error it will result in a panic
-func (w WebPart) ServeReadCloser(getReader func() (io.ReadCloser, error)) WebPart {
+func (w WebPart) ServeReadCloser(getReader func(WebUnit) (io.ReadCloser, error)) WebPart {
 	return Compose(w, ServeReadCloser(getReader))
 }
 
 // ServeBytes responses with the given bytes
 func ServeBytes(data []byte) WebPart {
-	return ServeReadCloser(func() (io.ReadCloser, error) { return MakeClosable(bytes.NewReader(data), nil), nil })
+	return ServeReadCloser(func(WebUnit) (io.ReadCloser, error) { return MakeClosable(bytes.NewReader(data), nil), nil })
 }
 
 // ServeBytes responses with the given bytes
 func (w WebPart) ServeBytes(data []byte) WebPart {
 	return Compose(w, ServeBytes(data))
+}
+
+// ServeBytesLazy responses with the given bytes
+func ServeBytesLazy(getData func(WebUnit) ([]byte, error)) WebPart {
+	return ServeReadCloser(func(u WebUnit) (io.ReadCloser, error) {
+		data, err := getData(u)
+		if err != nil {
+			return nil, err
+		}
+		return MakeClosable(bytes.NewReader(data), nil), nil
+	})
+}
+
+// ServeBytesLazy responses with the given bytes
+func (w WebPart) ServeBytesLazy(getData func(WebUnit) ([]byte, error)) WebPart {
+	return Compose(w, ServeBytesLazy(getData))
 }
 
 //ServeString serves the given string as response (convinience wrapper for ServeBytes)
@@ -63,7 +79,7 @@ func (w WebPart) ServeString(s string) WebPart {
 
 //ServeJSON responses with a JSON object as bytes
 func ServeJSON(obj interface{}) WebPart {
-	return ServeReadCloser(func() (io.ReadCloser, error) {
+	return ServeReadCloser(func(WebUnit) (io.ReadCloser, error) {
 		data, err := json.Marshal(obj)
 		if err != nil {
 			return nil, err

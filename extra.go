@@ -6,9 +6,16 @@ import "context"
 const extraKey contextKey = "extras"
 
 //Extras returns a Data object that can be set with PutExtra(s) during routing
+//returns nil if Extras where never written to this WebUnit
 func (u WebUnit) Extras() Data {
 	data, _ := u.Context.Value(extraKey).(Data)
 	return data
+}
+
+//HasExtras returns true if there is at least an empty extra object
+func (u WebUnit) HasExtras() bool {
+	data, _ := u.Context.Value(extraKey).(Data)
+	return data != nil
 }
 
 //PutExtra puts given key:value into Extras

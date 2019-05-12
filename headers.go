@@ -30,6 +30,9 @@ const (
 
 	// ContentTypeText "text/plain"
 	ContentTypeText = "text/plain"
+
+	// ContentTypeHTML "text/html"
+	ContentTypeHTML = "text/html"
 )
 
 // ContentType sets the "Content-Type" header
