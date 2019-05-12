@@ -65,3 +65,5 @@ localhost:44444/asbasd -> "404"
 - [ ] documentation
 - [ ] more examples
 - [ ] TLS support
+- [ ] Handling request data in Body
+- [ ] Web Sockets
