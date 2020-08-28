@@ -2,25 +2,23 @@ package grest
 
 // Query checks Request for required keys.
 // Pass through if requirements are met.
-// Additionally query parameters are put into Extras (only their first value though)
-// It's ok to pass nil if this WebPart should be skipped
+// Additionally all query parameters are put into Extras
 func Query(requiredKeys ...string) WebPart {
 	return QueryOrFail(nil, requiredKeys...)
 }
 
 // Query checks Request for required keys.
 // Pass through if requirements are met.
-// Additionally query parameters are put into Extras
-// It's ok to pass nil if this WebPart should be skipped
+// Additionally all query parameters are put into Extras
 func (w WebPart) Query(requiredKeys ...string) WebPart {
 	return Compose(w, Query(requiredKeys...))
 }
 
 // QueryOrFail checks Request for required keys.
 // Pass through if requirements are met.
-// Additionally query parameters are put into Extras (only their first value though)
+// Additionally all query parameters are put into Extras (only their first value though)
 // Return errResult if not.
-// It's ok to pass nil if this WebPart should be skipped
+// It's ok to pass nil if this WebPart should be skipped on error
 func QueryOrFail(errResult *WebPart, requiredKeys ...string) WebPart {
 	return func(u WebUnit) *WebUnit {
 		result := &u
@@ -53,9 +51,9 @@ func QueryOrFail(errResult *WebPart, requiredKeys ...string) WebPart {
 
 // QueryOrFail checks Request for required keys.
 // Pass through if requirements are met.
-// Additionally query parameters are put into Extras
+// Additionally all query parameters are put into Extras
 // Return errResult if not.
-// It's ok to pass nil if this WebPart should be skipped
+// It's ok to pass nil if this WebPart should be skipped on error
 func (w WebPart) QueryOrFail(errResult *WebPart, requiredKeys ...string) WebPart {
 	return Compose(w, QueryOrFail(errResult, requiredKeys...))
 }
